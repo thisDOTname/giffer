@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+
+<style>
+
+  body {
+    background-color: #121212;
+  }
+
+  #app {
+    margin: 1em;
+  }
+
+  .header {
+    color: #fff;
+  }
+
+  .header div {
+    font-size: 2em;
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  .gif-input-div {
+    background-color: #333;
+    padding: 1em;
+    margin: 1em 0;
+  }
+
+  .gif-input-div input {
+    width: 100%;
+    padding: 0.5em 0;
+    font-size: 1.25em;
+  }
+
+  .searched-for {
+    background-color: #333;
+    color: #fff;
+    padding: 0.5em;
+    margin: 1em 0;
+  }
+
+  .gif-results {
+    height: 60vh;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(250px, auto);
+    grid-gap: 50px;
+    text-align: center;
+    padding: 0 5%;
+  }
+
+  .gif-actions {
+    display: flex;
+    background: #B2DFDB;
+  }
+
+  .gif-actions button {
+    width: 50%;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    padding: 0.5em 0;
+    cursor: pointer;
+  }
+
+  .text-body {
+    background-color: #333;
+    height: 70vh;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    font-size: 2em;
+    font-style: italic;
+  }
+
+  .text-body div {
+    margin: auto;
+  }
+
+  /* The Modal (background) */
+.modal {
+  position: fixed; /* Stay in place */
+  display: flex;
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-header{
+    position: relative;
+    background: #333;
+    padding: 1em;
+    color: #fff;
+}
+
+.header-text {
+  font-weight: 700;
+  padding-left: 1em;
+  font-style: italic;
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 60%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  position: absolute;
+  right: 1em;
+  top: 1em;
+}
+
+.close:hover,
+.close:focus {
+  color: #ccc;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.share-body {
+  display: flex;
+  align-items: center;
+}
+
+.share-gif {
+  width: 100%;
+  background: #ccc;
+  margin: auto;
+}
+
+</style>
+
+<body>
+  <div id="app">
+    <div class="header">
+      <div>Giffer</div>
+    </div>
+
+    <div class="gif-input-div">
+      <input type="text" v-model="search" autofocus placeholder="Search for gifs" @keyup.enter="giffer">
+    </div>
+
+    <div class="searched-for" v-if="gifResponse.length">Showing results for <em>{{searchedTerm}}</em></div>
+    <div class="gif-results" v-if="gifResponse.length">
+      <template v-for="gif in gifResponse">
+        <div>
+            <img class="preview-gif" :src="gif.preview" alt="preview" style="width:100%;height:250px;">
+            <div class="gif-actions">
+              <button @click="viewGif(gif)">View</button>
+              <button @click="shareGif(gif)">Share</button>
+            </div>
+        </div>
+      </template>
+    </div>
+    <div class="text-body" v-else>
+      <div v-if="searching">
+        Searching gifs for "{{search}}"
+      </div>
+      <div v-else>
+        Search & find the perfect gif
+      </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal" v-show="viewModal">
+
+        <!-- Modal content -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="close" @click="viewModal = false;">[ close ]</span>
+          <span class="header-text">{{searchedTerm}} gif</span>
+        </div>
+        <img :src="selectedGif.share" alt="share" style="width: 100%; height: 50vh;" />
+      </div>
+      
+    </div>
+
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal" v-show="shareModal">
+
+        <!-- Modal content -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="close" @click="shareModal = false;">[ close ]</span>
+          <span class="header-text">{{searchedTerm}} gif</span>
+        </div>
+        <div class="share-body">
+          <img class="preview-gif" :src="selectedGif.preview" alt="preview" style="width:100%;height:250px;">
+          <textarea readonly class="share-gif">{{selectedGif.url}}</textarea>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+      let app = new Vue({
+        el: '#app',
+        data: {
+          search: '',
+          searchResults: [],
+          gifResponse: [],
+          searchedTerm: '',
+          searching: false,
+          viewModal: false,
+          shareModal: false,
+          selectedGif: {},
+          preview: '',
+          share: ''
+        },
+        mounted() {
+          let self = this;
+          let viewModalElm = document.getElementById('viewModal');
+          let shareModalElm = document.getElementById('shareModal');
+          // When the user clicks anywhere outside of the modal, close it
+          window.onclick = function(event) {
+            if (event.target == viewModalElm || event.target == shareModalElm) {
+              self.viewModal = false;
+              self.shareModal = false;
+            }
+          }
+        },
+        methods: {
+          giffer() {
+            let self = this;
+            let url = "https://api.tenor.com/v1/anonid?key=" + "LIVDSRZULELA";
+            // start the flow by getting a new anonymous id and having the callback pass it to grab_data
+            self.httpGetAsync(url, self.tenorCallback_anonid);
+          },
+          httpGetAsync(theUrl, callback) {
+            let self = this;
+
+            self.gifResponse = [];
+            self.searching = true;
+            // create the request object
+            let xmlHttp = new XMLHttpRequest();
+
+            // set the state change callback to capture when the response comes in
+            xmlHttp.onreadystatechange = function() {
+              if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                callback(xmlHttp.responseText);
+              }
+            }
+
+            // open as a GET call, pass in the url and set async = True
+            xmlHttp.open("GET", theUrl, true);
+
+            // call send with no params as they were passed in on the url string
+            xmlHttp.send(null);
+
+            return;
+          },
+          tenorCallback_search(responsetext) {
+            let self = this;
+            // parse the json response
+            let response_objects = JSON.parse(responsetext);
+
+            self.searchResults = response_objects["results"];
+
+            self.gifResponse = self.searchResults.map(obj =>{ 
+              let rObj = {};
+              rObj['preview'] = obj["media"][0]["nanogif"]["url"];
+              rObj['share'] = obj["media"][0]["tinygif"]["url"];
+              rObj['url'] = obj["url"];
+              return rObj;
+            });
+            self.searching = false;
+            return;
+          },
+          grab_data(anon_id) {
+            let self = this;
+            // set the apikey and limit
+            let apikey = "LIVDSRZULELA";
+            let lmt = 20;
+
+            // using default locale of en_US
+            let search_url = "https://api.tenor.com/v1/search?tag=" + self.search + "&key=" + apikey + "&limit=" + lmt + "&anon_id=" + anon_id;
+
+            self.searchedTerm = self.search;
+
+            self.httpGetAsync(search_url,self.tenorCallback_search);
+
+            // data will be loaded by each call's callback
+            return;
+          },
+          tenorCallback_anonid(responsetext) {
+            let self = this;
+            // parse the json response
+            let response_objects = JSON.parse(responsetext);
+
+            anon_id = response_objects["anon_id"];
+
+            user_anon_id = anon_id;
+
+            // pass on to grab_data
+            self.grab_data(anon_id);
+          },
+          viewGif(gif) {
+            let self = this;
+            console.log('viewGif : ', gif);
+            self.selectedGif = gif;
+            self.viewModal = true;
+          },
+          shareGif(gif) {
+            let self = this;
+            console.log('shareGif : ', gif);
+            self.selectedGif = gif;
+            self.shareModal = true;
+          }
+        }
+      })
+    </script>
+</body>
+</html>
