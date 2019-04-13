@@ -1,19 +1,22 @@
 <template>
   <div id="app">
     <div class="header">
+      <img class="giffer-logo" src="./assets/giffer.png" />
       <div>Giffer</div>
+      <div class="header-links">
+        <router-link :to="{ name: 'home'}">Home</router-link>
+        <router-link :to="{ name: 'examples'}">Examples</router-link>
+      </div>
     </div>
 
     <div class="gif-input-div">
-      <form>
-        <input
-          type="text"
-          v-model="search"
-          autofocus
-          placeholder="Search for gifs"
-          @keyup.enter="giffer"
-        >
-      </form>
+      <input
+        type="text"
+        v-model="search"
+        autofocus
+        placeholder="Search for gifs"
+        @keyup.enter="giffer"
+      >
     </div>
     <router-view></router-view>
   </div>
@@ -86,16 +89,35 @@ export default {
 
   .header
     color: #fff
-    div
-      font-size: 2em
-      font-weight: 700
-      font-style: italic
+    display: flex;
+    align-items: center;
+
+  .header div
+    font-size: 2em
+    font-weight: 700
+    font-style: italic
+
+  .giffer-logo
+    width: 80px
+    height: 80px
+
+  .header-links
+    position: absolute
+    right: 0
+
+  .header-links a
+    font-size: 0.75em
+    text-decoration: none
+    padding: 0 1em
+    color: #fff
+    font-weight: 100
 
   .gif-input-div
     background-color: #333
     padding: 1em
     margin: 1em 0
-    input
+
+  .gif-input-div input
       width: 100%
       padding: 0.5em 0
       font-size: 1.25em

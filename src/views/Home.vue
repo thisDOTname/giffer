@@ -143,7 +143,8 @@ export default {
     .gif-actions
       display: flex
       background: #B2DFDB
-      button
+
+    .gif-actions button
         width: 50%
         background: #333
         color: #fff
@@ -159,11 +160,12 @@ export default {
       align-items: center
       font-size: 2em
       font-style: italic
-      div
+
+    .text-body div
         margin: auto;
 
     .preview-gif
-      width:100%
-      height:250px
+      width: 100%
+      height: 250px
 
 </style>

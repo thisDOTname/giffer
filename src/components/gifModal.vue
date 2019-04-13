@@ -20,7 +20,7 @@ export default {
 };
 </script>
 
-<style scoped lang="stylus">
+<style scoped lang="sass">
   .modal-overlay
     position: fixed
     top: 0
@@ -78,7 +78,7 @@ export default {
     margin: auto
 
   .preview-gif
-    width:100%
-    height:250px
+    width: 100%
+    height: 250px
 
 </style>
